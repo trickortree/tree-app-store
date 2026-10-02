@@ -23,7 +23,7 @@
     "description": "Play millions of games made by the community. Opens the official download page.",
     "icon": "🎮",
     "type": "download",
-    "url": "https://github.com/trickortree/tree-store-items/blob/main/RobloxPlayerInstaller.exe"
+    "url": "https://github.com/trickortree/tree-store-items/raw/main/RobloxPlayerInstaller.exe"
   },
   {
     "id": "vpn",
@@ -31,7 +31,7 @@
     "description": "Free, no-ads VPN. Opens the official download page.",
     "icon": "🛡️",
     "type": "download",
-    "url": "https://github.com/trickortree/tree-store-items/blob/main/HotspotShieldFreeVPN.Msix"
+    "url": "https://github.com/trickortree/tree-store-items/raw/main/HotspotShieldFreeVPN.Msix"
   },
   {
     "id": "7zip",
