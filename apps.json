@@ -1,0 +1,52 @@
+[
+  {
+    "id": "treesim",
+    "name": "Hypergamous Tree Chopping Simulator 3",
+    "description": "The tree chopping game. Installs the latest release and keeps itself updated.",
+    "icon": "🌲",
+    "type": "github",
+    "repo": "trickortree/treesim",
+    "productName": "Hypergamous Tree Chopping Simulator 3"
+  },
+  {
+    "id": "treelens",
+    "name": "Tree Lens",
+    "description": "Alt+Space search bar with a Lens button: select anything on your screen and a local AI describes, identifies or translates it. Works offline.",
+    "icon": "🔎",
+    "type": "github",
+    "repo": "trickortree/tree-lens",
+    "productName": "Tree Lens"
+  },
+  {
+    "id": "roblox",
+    "name": "Roblox",
+    "description": "Play millions of games made by the community. Opens the official download page.",
+    "icon": "🎮",
+    "type": "link",
+    "url": "https://www.roblox.com/download"
+  },
+  {
+    "id": "vpn",
+    "name": "Proton VPN",
+    "description": "Free, no-ads VPN. Opens the official download page.",
+    "icon": "🛡️",
+    "type": "link",
+    "url": "https://protonvpn.com/download-windows"
+  },
+  {
+    "id": "7zip",
+    "name": "7-Zip",
+    "description": "Open and create zip, 7z, rar and other archives. Opens the official download page.",
+    "icon": "🗜️",
+    "type": "link",
+    "url": "https://www.7-zip.org/download.html"
+  },
+  {
+    "id": "vlc",
+    "name": "VLC media player",
+    "description": "Plays practically any video or audio file. Opens the official download page.",
+    "icon": "🎬",
+    "type": "link",
+    "url": "https://www.videolan.org/vlc/download-windows.html"
+  }
+]

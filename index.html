@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'self'">
+<title>Tree App Store</title>
+<style>
+  :root {
+    --bg: #0f1a14; --panel: #17261d; --line: #264033; --text: #e8f3ec; --muted: #8fb09c;
+    --accent: #4ade80; --accent-text: #06210f; --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI", sans-serif; }
+  header { display: flex; align-items: center; gap: 24px; padding: 14px 24px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 20px; }
+  nav { display: flex; gap: 6px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+           border-radius: 8px; padding: 8px 16px; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .6; cursor: default; }
+  nav button.active { border-color: var(--accent); color: var(--accent); }
+  #banner { display: none; margin: 14px 24px 0; padding: 10px 14px; border-radius: 8px; background: var(--panel);
+            border: 1px solid var(--accent); align-items: center; justify-content: space-between; }
+  main { padding: 20px 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--panel);
+          border: 1px solid var(--line); border-radius: 12px; }
+  .card .top { display: flex; gap: 14px; align-items: center; }
+  .icon { font-size: 34px; width: 56px; height: 56px; display: grid; place-items: center; background: var(--bg);
+          border-radius: 12px; flex: none; }
+  .card h2 { margin: 0; font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 13.5px; flex: 1; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .note { color: var(--muted); font-size: 12.5px; }
+  .err { color: var(--danger); font-size: 13px; }
+  .modes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .modes button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  input[type=text] { font: inherit; background: var(--panel); color: var(--text); border: 1px solid var(--line);
+                     border-radius: 8px; padding: 8px 12px; width: 160px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌲 Tree App Store</h1>
+  <span class="note" id="version" style="margin-left:auto"></span>
+</header>
+
+<div id="banner">
+  <span id="banner-text"></span>
+  <button class="primary" id="banner-btn">Restart now</button>
+</div>
+
+<main>
+  <section>
+    <div class="grid" id="grid"></div>
+  </section>
+
+</main>
+<script src="renderer.js"></script>
+</body>
+</html>
