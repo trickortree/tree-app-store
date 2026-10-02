@@ -94,11 +94,10 @@ function entryFor(id) {
 
 ipcMain.handle("app:version", () => app.getVersion());
 
-// Version of an installed app: the DisplayVersion its installer wrote to the Windows uninstall list.
-function installedVersion(entry) {
+// Version of an installed app, read from its exe (electron-builder stamps the app version into it).
+function installedVersion(exe) {
     return new Promise(resolve => {
-        const script = "(Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue"
-            + ` | Where-Object { $_.DisplayName -like '${entry.productName.replace(/'/g, "''")}*' } | Select-Object -First 1).DisplayVersion`;
+        const script = `(Get-Item -LiteralPath '${exe.replace(/'/g, "''")}').VersionInfo.FileVersion`;
         execFile("powershell", ["-NoProfile", "-Command", script], { windowsHide: true, timeout: 8000 },
             (err, out) => resolve(err ? null : (String(out).trim() || null)));
     });
@@ -131,9 +130,10 @@ function newer(latest, installed) {
 }
 
 ipcMain.handle("apps:list", () => Promise.all(catalog.map(async a => {
-    const installed = !!installedExe(a);
+    const exe = installedExe(a);
+    const installed = !!exe;
     let current = null, latest = null;
-    if (installed) [current, latest] = await Promise.all([installedVersion(a), latestVersion(a)]);
+    if (installed) [current, latest] = await Promise.all([installedVersion(exe), latestVersion(a)]);
     return {
         id: a.id,
         name: a.name,
