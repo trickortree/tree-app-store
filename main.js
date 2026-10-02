@@ -47,12 +47,23 @@ function createWindow() {
 
 /* ---------- Catalog ---------- */
 
-function validCatalog(list) {
-    return Array.isArray(list) && list.every(a =>
-        a && typeof a.id === "string" && typeof a.name === "string" && TYPES.includes(a.type)
-        && (a.type === "github" ? typeof a.repo === "string" && typeof a.productName === "string"
-            : /^https:\/\//.test(a.url || "")));
+// Returns a plain-English description of the first problem in the list, or null if it is fine.
+function catalogProblem(list) {
+    if (!Array.isArray(list)) return "apps.json must be a list [ ... ].";
+    for (const a of list) {
+        const who = `"${(a && a.id) || "?"}"`;
+        if (!a || typeof a.id !== "string" || typeof a.name !== "string") return `${who} needs an id and a name.`;
+        if (!TYPES.includes(a.type)) return `${who} has type "${a.type}". Use "github", "download" or "link".`;
+        if (a.type === "github" && (typeof a.repo !== "string" || typeof a.productName !== "string")) {
+            return `${who} is type "github", which needs "repo" (like owner/name) and "productName". To download one file from a URL use type "download" instead.`;
+        }
+        if (a.type !== "github" && !/^https:\/\//.test(a.url || "")) return `${who} needs a "url" starting with https://.`;
+    }
+    return null;
 }
+
+let catalogError = null;
+ipcMain.handle("catalog:error", () => catalogError);
 
 async function loadRemoteCatalog() {
     const cacheFile = path.join(app.getPath("userData"), "apps-cache.json");
@@ -60,14 +71,15 @@ async function loadRemoteCatalog() {
         const res = await fetch(CATALOG_URL, { signal: AbortSignal.timeout(5000), cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
-        if (!validCatalog(list)) throw new Error("apps.json on GitHub is not valid");
+        catalogError = catalogProblem(list);
+        if (catalogError) throw new Error(catalogError);
         fs.writeFileSync(cacheFile, JSON.stringify(list));
         catalog = list;
     } catch (err) {
         console.error("Catalog fetch failed, using cached/bundled list:", err.message);
         try {
             const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
-            if (validCatalog(cached)) catalog = cached;
+            if (!catalogProblem(cached)) catalog = cached;
         } catch { /* no cache yet */ }
     }
 }

@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("store", {
     onUpdateStatus: cb => on("update:status", cb),
     onInstallProgress: cb => on("apps:progress", cb),
     version: () => ipcRenderer.invoke("app:version"),
+    catalogError: () => ipcRenderer.invoke("catalog:error"),
     restartForUpdate: () => ipcRenderer.send("update:restart"),
     onUpdateReady: cb => on("update:ready", cb),
     onFocus: cb => on("window:focus", cb)

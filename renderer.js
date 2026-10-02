@@ -70,6 +70,11 @@ window.store.onUpdateReady(({ version }) => {
 });
 $("banner-btn").onclick = () => window.store.restartForUpdate();
 renderApps();
+window.store.catalogError().then(msg => {
+    if (!msg) return;
+    $("catalog-error").textContent = `The online app list has a mistake, so the store is showing its last good list instead. ${msg}`;
+    $("catalog-error").style.display = "block";
+});
 
 $("check").onclick = () => window.store.checkForUpdates();
 window.store.onUpdateStatus(s => {
