@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { spawn } = require("child_process");
+const { spawn, execFile } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 
 app.setAppUserModelId("com.trickortree.treeappstore");
@@ -94,16 +94,67 @@ function entryFor(id) {
 
 ipcMain.handle("app:version", () => app.getVersion());
 
-ipcMain.handle("apps:list", () =>
-    catalog.map(a => ({
+// Version of an installed app: the DisplayVersion its installer wrote to the Windows uninstall list.
+function installedVersion(entry) {
+    return new Promise(resolve => {
+        const script = "(Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue"
+            + ` | Where-Object { $_.DisplayName -like '${entry.productName.replace(/'/g, "''")}*' } | Select-Object -First 1).DisplayVersion`;
+        execFile("powershell", ["-NoProfile", "-Command", script], { windowsHide: true, timeout: 8000 },
+            (err, out) => resolve(err ? null : (String(out).trim() || null)));
+    });
+}
+
+const latestCache = new Map(); // repo -> { version, at }
+async function latestVersion(entry) {
+    const hit = latestCache.get(entry.repo);
+    if (hit && Date.now() - hit.at < 10 * 60_000) return hit.version;
+    try {
+        const res = await fetch(`https://api.github.com/repos/${entry.repo}/releases/latest`, {
+            headers: { "User-Agent": "tree-app-store", Accept: "application/vnd.github+json" },
+            signal: AbortSignal.timeout(6000)
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const version = (await res.json()).tag_name.replace(/^v/, "");
+        latestCache.set(entry.repo, { version, at: Date.now() });
+        return version;
+    } catch {
+        return null;
+    }
+}
+
+function newer(latest, installed) {
+    const a = String(latest).split(".").map(Number), b = String(installed).split(".").map(Number);
+    for (let i = 0; i < 3; i++) {
+        if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+    }
+    return false;
+}
+
+ipcMain.handle("apps:list", () => Promise.all(catalog.map(async a => {
+    const installed = !!installedExe(a);
+    let current = null, latest = null;
+    if (installed) [current, latest] = await Promise.all([installedVersion(a), latestVersion(a)]);
+    return {
         id: a.id,
         name: a.name,
         description: a.description || "",
         icon: a.icon || "📦",
         kind: a.type,
-        installed: !!installedExe(a)
-    }))
-);
+        installed,
+        version: current,
+        update: !!(current && latest && newer(latest, current)) ? latest : null
+    };
+})));
+
+ipcMain.handle("apps:uninstall", (_e, id) => {
+    const entry = entryFor(id);
+    const exe = entry && installedExe(entry);
+    if (!exe) return { ok: false, error: "Not installed." };
+    const uninstaller = path.join(path.dirname(exe), `Uninstall ${entry.productName}.exe`);
+    if (!fs.existsSync(uninstaller)) return { ok: false, error: "Couldn't find its uninstaller. Use Windows Settings > Apps instead." };
+    spawn(uninstaller, [], { detached: true, stdio: "ignore", cwd: path.dirname(uninstaller) }).unref();
+    return { ok: true };
+});
 
 async function downloadFile(url, fileName, id) {
     const dl = await fetch(url, { headers: { "User-Agent": "tree-app-store" } });
@@ -169,12 +220,23 @@ ipcMain.handle("apps:open", (_e, id) => {
 /* ---------- Updates ---------- */
 
 function setupAutoUpdater() {
-    if (!app.isPackaged) return;
+    if (!app.isPackaged) {
+        ipcMain.on("update:check", () => send("update:status", { state: "none" }));
+        return;
+    }
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on("checking-for-update", () => send("update:status", { state: "checking" }));
+    autoUpdater.on("update-not-available", () => send("update:status", { state: "none" }));
+    autoUpdater.on("update-available", info => send("update:status", { state: "downloading", version: info.version, percent: 0 }));
+    autoUpdater.on("download-progress", p => send("update:status", { state: "downloading", percent: Math.round(p.percent) }));
     autoUpdater.on("update-downloaded", info => send("update:ready", { version: info.version }));
-    autoUpdater.on("error", err => console.error("AUTO-UPDATER ERROR:", err));
+    autoUpdater.on("error", err => {
+        console.error("AUTO-UPDATER ERROR:", err);
+        send("update:status", { state: "error", message: String(err.message || err).slice(0, 120) });
+    });
     ipcMain.on("update:restart", () => autoUpdater.quitAndInstall());
+    ipcMain.on("update:check", () => autoUpdater.checkForUpdates().catch(() => {}));
     autoUpdater.checkForUpdates().catch(err => console.error(err));
     setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
 }

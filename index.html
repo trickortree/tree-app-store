@@ -39,13 +39,17 @@
   .modes button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
   input[type=text] { font: inherit; background: var(--panel); color: var(--text); border: 1px solid var(--line);
                      border-radius: 8px; padding: 8px 12px; width: 160px; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { color: var(--danger); border-color: var(--danger); }
   .hidden { display: none !important; }
 </style>
 </head>
 <body>
 <header>
   <h1>🌲 Tree App Store</h1>
-  <span class="note" id="version" style="margin-left:auto"></span>
+  <span class="note" id="upd-status" style="margin-left:auto"></span>
+  <button id="check">Check for updates</button>
+  <span class="note" id="version"></span>
 </header>
 
 <div id="banner">
