@@ -20,7 +20,7 @@ function card(app) {
     if (app.installed) label = app.update ? `Update to v${app.update}` : "Open";
     if (busy) label = progress[app.id] > 0 ? `Downloading ${progress[app.id]}%` : "Starting...";
 
-    const btn = el("button", { textContent: label, disabled: busy });
+    const btn = el("button", { className: "main-btn", textContent: label, disabled: busy });
     btn.classList.toggle("primary", !app.installed || !!app.update);
     btn.onclick = async () => {
         delete errors[app.id];
@@ -50,7 +50,7 @@ function card(app) {
             }
         })
         : "";
-    return el("div", { className: "card" },
+    const card = el("div", { className: "card" },
         el("div", { className: "top" },
             el("div", { className: "icon", textContent: app.icon }),
             el("h2", { textContent: app.name })),
@@ -58,9 +58,15 @@ function card(app) {
         el("div", { className: "row" }, btn, uninstall, el("span", { className: "note", textContent: note })),
         errors[app.id] ? el("div", { className: "err", textContent: errors[app.id] }) : ""
     );
+    card.dataset.app = app.id;
+    return card;
 }
 
-window.store.onInstallProgress(({ id, percent }) => { progress[id] = percent; renderApps(); });
+window.store.onInstallProgress(({ id, percent }) => {
+    progress[id] = percent;
+    const btn = document.querySelector(`[data-app="${id}"] .main-btn`);
+    if (btn) btn.textContent = percent > 0 ? `Downloading ${percent}%` : "Starting...";
+});
 // The installer runs outside the store, so refresh when the user comes back.
 window.store.onFocus(renderApps);
 window.store.version().then(v => { $("version").textContent = `v${v}`; });

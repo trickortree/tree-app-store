@@ -107,12 +107,20 @@ function entryFor(id) {
 ipcMain.handle("app:version", () => app.getVersion());
 
 // Version of an installed app, read from its exe (electron-builder stamps the app version into it).
+// Cached per exe + modified time: starting PowerShell is slow, so it only runs after an install or update.
+const versionCache = new Map();
 function installedVersion(exe) {
-    return new Promise(resolve => {
+    let mtime;
+    try { mtime = fs.statSync(exe).mtimeMs; } catch { return Promise.resolve(null); }
+    const hit = versionCache.get(exe);
+    if (hit && hit.mtime === mtime) return hit.promise;
+    const promise = new Promise(resolve => {
         const script = `(Get-Item -LiteralPath '${exe.replace(/'/g, "''")}').VersionInfo.FileVersion`;
         execFile("powershell", ["-NoProfile", "-Command", script], { windowsHide: true, timeout: 8000 },
             (err, out) => resolve(err ? null : (String(out).trim() || null)));
     });
+    versionCache.set(exe, { mtime, promise });
+    return promise;
 }
 
 const latestCache = new Map(); // repo -> { version, at }
@@ -176,11 +184,14 @@ async function downloadFile(url, fileName, id) {
     const dest = path.join(dir, path.basename(fileName));
     const total = Number(dl.headers.get("content-length")) || 0;
     const out = fs.createWriteStream(dest);
-    let done = 0;
+    let done = 0, lastSent = 0;
     for await (const chunk of dl.body) {
         if (!out.write(chunk)) await new Promise(r => out.once("drain", r));
         done += chunk.length;
-        send("apps:progress", { id, percent: total ? Math.round(done / total * 100) : 0 });
+        if (Date.now() - lastSent > 250) {
+            lastSent = Date.now();
+            send("apps:progress", { id, percent: total ? Math.round(done / total * 100) : 0 });
+        }
     }
     await new Promise((resolve, reject) => out.end(err => (err ? reject(err) : resolve())));
     return dest;
@@ -247,7 +258,8 @@ function setupAutoUpdater() {
         console.error("AUTO-UPDATER ERROR:", err);
         send("update:status", { state: "error", message: String(err.message || err).slice(0, 120) });
     });
-    ipcMain.on("update:restart", () => autoUpdater.quitAndInstall());
+    // silent install and relaunch: no installer wizard
+    ipcMain.on("update:restart", () => autoUpdater.quitAndInstall(true, true));
     ipcMain.on("update:check", () => autoUpdater.checkForUpdates().catch(() => {}));
     autoUpdater.checkForUpdates().catch(err => console.error(err));
     setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
