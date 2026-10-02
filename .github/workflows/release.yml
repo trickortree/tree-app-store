@@ -25,7 +25,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish
-        run: npx electron-builder --win --publish always
+      # Build only; electron-builder's own publisher can create duplicate releases on a fresh repo.
+      - name: Build
+        run: npx electron-builder --win --publish never
+
+      - name: Publish release
+        shell: bash
+        run: gh release create "$GITHUB_REF_NAME" dist/*.exe dist/*.blockmap dist/latest.yml --title "$GITHUB_REF_NAME" --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
