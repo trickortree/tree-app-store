@@ -1,6 +1,6 @@
 {
   "name": "tree-app-store",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Tree App Store",
   "main": "main.js",
   "scripts": {
@@ -38,7 +38,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "Tree-App-Store-Setup-${version}.${ext}"
     },
     "publish": {
       "provider": "github",
