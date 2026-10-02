@@ -22,16 +22,16 @@
     "name": "Roblox",
     "description": "Play millions of games made by the community. Opens the official download page.",
     "icon": "🎮",
-    "type": "link",
-    "url": "https://www.roblox.com/download"
+    "type": "github",
+    "url": "https://github.com/trickortree/tree-store-items/blob/main/RobloxPlayerInstaller.exe"
   },
   {
     "id": "vpn",
-    "name": "Proton VPN",
+    "name": "Free VPN",
     "description": "Free, no-ads VPN. Opens the official download page.",
     "icon": "🛡️",
-    "type": "link",
-    "url": "https://protonvpn.com/download-windows"
+    "type": "github",
+    "url": "https://github.com/trickortree/tree-store-items/blob/main/HotspotShieldFreeVPN.Msix"
   },
   {
     "id": "7zip",
